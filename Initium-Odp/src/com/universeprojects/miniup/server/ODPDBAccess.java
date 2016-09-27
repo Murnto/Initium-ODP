@@ -31,6 +31,9 @@ import com.google.appengine.api.memcache.MemcacheService.SetPolicy;
 import com.universeprojects.cacheddatastore.CachedDatastoreService;
 import com.universeprojects.cacheddatastore.CachedEntity;
 import com.universeprojects.miniup.server.commands.framework.UserErrorMessage;
+import com.universeprojects.miniup.server.entities.Character;
+import com.universeprojects.miniup.server.entities.Item;
+import com.universeprojects.miniup.server.entities.SaleItem;
 import com.universeprojects.miniup.server.longoperations.AbortedActionException;
 
 public class ODPDBAccess
@@ -314,9 +317,9 @@ public class ODPDBAccess
 	 * @param request
 	 * @return
 	 */
-	public CachedEntity getCurrentCharacter()
-	{
-		if (getRequest().getAttribute("characterEntity") != null) return (CachedEntity) getRequest().getAttribute("characterEntity");
+	public Character getCurrentCharacter() {
+		if (getRequest().getAttribute("characterEntity") != null)
+			return Character.wrap((CachedEntity) getRequest().getAttribute("characterEntity"));
 
 		HttpSession session = request.getSession(true);
 
@@ -326,7 +329,7 @@ public class ODPDBAccess
 		{
 			CachedEntity user = getCurrentUser();
 			Key characterKey = (Key) user.getProperty("characterKey");
-			CachedEntity character = getEntity(characterKey);
+			Character character = Character.wrap(getEntity(characterKey));
 
 			if (character != null)
 			{
@@ -339,7 +342,7 @@ public class ODPDBAccess
 		if (authenticatedInstantCharacterId != null)
 		{
 			Key characterKey = createKey("Character", authenticatedInstantCharacterId);
-			CachedEntity character = getEntity(characterKey);
+			Character character = Character.wrap(getEntity(characterKey));
 
 			if (character != null)
 			{
@@ -423,9 +426,9 @@ public class ODPDBAccess
 
 	/**
 	 * Fetches the CachedEntity from the given key.
-	 * 
+	 *
 	 * If key is null, this method will return null.
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
@@ -441,6 +444,48 @@ public class ODPDBAccess
 			// Ignore
 		}
 		return null;
+	}
+
+	/**
+	 * Fetches the {@link Character} from the given key.
+	 * <p>
+	 * If key is null, this method will return null.
+	 *
+	 * @param key
+	 * @return
+	 */
+	public Character getCharacter(Key key) {
+		if (key == null) return null;
+		try {
+			return Character.wrap(getDB().get(key));
+		} catch (EntityNotFoundException e) {
+			// Ignore
+		}
+		return null;
+	}
+
+	/**
+	 * Fetches the {@link SaleItem} from the given key.
+	 * <p>
+	 * If there is no SaleItem, this method will return null.
+	 *
+	 * @param saleItemId
+	 * @return
+	 */
+	public SaleItem getSaleItem(Long saleItemId) {
+		return SaleItem.wrap(this.getEntity("SaleItem", saleItemId));
+	}
+
+	/**
+	 * Fetches the {@link Item} from the given key.
+	 * <p>
+	 * If key is null, this method will return null.
+	 *
+	 * @param itemKey
+	 * @return
+	 */
+	public Item getItem(Key itemKey) {
+		return Item.wrap(this.getEntity(itemKey));
 	}
 
 	/**
@@ -609,12 +654,10 @@ public class ODPDBAccess
 		return names;
 	}
 
-	public CachedEntity getCharacterById(Long id)
-	{
+	public Character getCharacterById(Long id) {
 		if (id == null) return null;
-		try
-		{
-			return getDB().get(KeyFactory.createKey("Character", id));
+		try {
+			return Character.wrap(getDB().get(KeyFactory.createKey("Character", id)));
 		}
 		catch (EntityNotFoundException e)
 		{
